@@ -9,12 +9,36 @@ const Explore = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // ✅ NAYA — filter states
+  // Filter states
   const [search, setSearch] = useState("");
   const [foodType, setFoodType] = useState("");
   const [isFree, setIsFree] = useState(false);
 
-  // ✅ NAYA — jab bhi koi filter badle, dobara fetch karo
+  // Location states
+  const [location, setLocation] = useState(null);
+  const [locationError, setLocationError] = useState("");
+
+  // Page load hote hi ek baar buyer ki location maango
+  useEffect(() => {
+    if (!navigator.geolocation) {
+      setLocationError("Location not supported by your browser.");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setLocation({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        });
+      },
+      (err) => {
+        setLocationError("Location access denied. Showing all listings without distance.");
+      }
+    );
+  }, []); // khali array — sirf ek baar
+
+  // Jab bhi koi filter ya location badle, dobara fetch karo
   useEffect(() => {
     const fetchFoods = async () => {
       setLoading(true);
@@ -24,6 +48,10 @@ const Explore = () => {
         if (search) filters.search = search;
         if (foodType) filters.foodType = foodType;
         if (isFree) filters.isFree = true;
+        if (location) {
+          filters.lat = location.lat;
+          filters.lng = location.lng;
+        }
 
         const data = await getFoods(filters);
         setFoods(data.foodListings);
@@ -34,11 +62,10 @@ const Explore = () => {
       }
     };
 
-    // ✅ Debounce — user ke type karna band karne ke 400ms baad hi search chalao,
-    // warna har letter type karte hi API call chali jayegi (slow aur wasteful)
+    // Debounce — user ke type karna band karne ke 400ms baad hi search chalao
     const timer = setTimeout(fetchFoods, 400);
-    return () => clearTimeout(timer); // pichla timer cancel karo agar naya change aa gaya
-  }, [search, foodType, isFree]);
+    return () => clearTimeout(timer);
+  }, [search, foodType, isFree, location]);
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-10">
@@ -46,6 +73,10 @@ const Explore = () => {
       <p className="text-gray-600 text-sm mt-1">
         Safe, unserved surplus food available near you
       </p>
+
+      {locationError && (
+        <p className="text-xs text-amber-600 mt-2">{locationError}</p>
+      )}
 
       {/* ---- Search + Filters ---- */}
       <div className="mt-6 flex flex-col sm:flex-row gap-3">

@@ -67,41 +67,43 @@ const createFoodListing = async (req, res) => {
 // @access  Public
 
     // Abhi sirf ACTIVE listings dikhao — expired/sold-out/cancelled nahi
-    const getFoodListings = async (req, res) => {
+   const getFoodListings = async (req, res) => {
   try {
-    const { search, foodType, listingType, isFree, maxPrice } = req.query;
+    const { search, foodType, listingType, isFree, maxPrice, lat, lng, radius } = req.query;
 
-    // Base query — hamesha sirf ACTIVE listings
     const query = { status: "ACTIVE" };
+    if (search) query.title = { $regex: search, $options: "i" };
+    if (foodType) query.foodType = foodType;
+    if (listingType) query.listingType = listingType;
+    if (isFree === "true") query.price = 0;
+    if (maxPrice) query.price = { ...query.price, $lte: Number(maxPrice) };
 
-    // ✅ Search by title (case-insensitive, partial match)
-    if (search) {
-      query.title = { $regex: search, $options: "i" };
-    }
-
-    // ✅ Food type filter (vegetarian / non_vegetarian / vegan)
-    if (foodType) {
-      query.foodType = foodType;
-    }
-
-    // ✅ Listing type filter (SURPLUS / END_OF_DAY_SURPLUS)
-    if (listingType) {
-      query.listingType = listingType;
-    }
-
-    // ✅ Free food only
-    if (isFree === "true") {
-      query.price = 0;
-    }
-
-    // ✅ Max price filter
-    if (maxPrice) {
-      query.price = { ...query.price, $lte: Number(maxPrice) };
-    }
-
-    const foodListings = await FoodListing.find(query)
+    // ✅ .lean() — Mongoose documents ki jagah plain JavaScript objects deta hai.
+    // Isse fayda: hum inme aage naye fields (jaise "distance") aasani se add kar sakte hain.
+    let foodListings = await FoodListing.find(query)
       .populate("providerId", "name providerType")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
+
+    // ✅ NAYA — agar buyer ki location di gayi hai, har listing ka distance calculate karo
+    if (lat && lng) {
+      const buyerLat = Number(lat);
+      const buyerLng = Number(lng);
+
+      foodListings = foodListings.map((food) => {
+        const [foodLng, foodLat] = food.pickupLocation.coordinates.coordinates;
+        const distance = getDistanceInKm(buyerLat, buyerLng, foodLat, foodLng);
+        return { ...food, distance: Math.round(distance * 10) / 10 }; // 1 decimal tak round
+      });
+
+      // ✅ Optional radius filter — "sirf X km ke andar wale dikhao"
+      if (radius) {
+        foodListings = foodListings.filter((food) => food.distance <= Number(radius));
+      }
+
+      // ✅ Nearest food sabse pehle dikhao
+      foodListings.sort((a, b) => a.distance - b.distance);
+    }
 
     res.status(200).json({
       success: true,

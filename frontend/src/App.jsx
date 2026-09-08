@@ -15,6 +15,8 @@ import FoodDetails from "./pages/FoodDetails";
 import Cart from "./pages/Cart";
 import MyOrders from "./pages/MyOrders";
 import MyDeliveries from "./pages/MyDeliveries";
+import CreateFoodRequest from "./pages/CreateFoodRequest";
+import FoodRequests from "./pages/FoodRequests";
 
 function App() {
   return (
@@ -30,6 +32,8 @@ function App() {
               <Route path="register" element={<Register />} />
               <Route path="dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="my-deliveries" element={<ProtectedRoute><MyDeliveries /></ProtectedRoute>} />
+              <Route path="create-request" element={<ProtectedRoute><CreateFoodRequest /></ProtectedRoute>} />
+<Route path="food-requests" element={<ProtectedRoute><FoodRequests /></ProtectedRoute>} />
               <Route path="add-food" element={<ProtectedRoute><AddFood /></ProtectedRoute>} />
               <Route path="my-orders" element={<ProtectedRoute><MyOrders /></ProtectedRoute>} />
          <Route path="my-orders" element={<ProtectedRoute><MyOrders /></ProtectedRoute>} />   {/* ✅ NAYA */}

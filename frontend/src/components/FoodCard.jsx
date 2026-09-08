@@ -81,7 +81,15 @@ const FoodCard = ({ food }) => {
           )}
         </div>
 
-        <p className="text-xs text-gray-500 mt-1">{food.servings} servings</p>
+    <div className="flex items-center gap-2 mt-1">
+  <p className="text-xs text-gray-500">{food.servings} servings</p>
+  {food.distance !== undefined && (
+    <>
+      <span className="text-gray-300">·</span>
+      <p className="text-xs text-gray-500">{food.distance} km away</p>
+    </>
+  )}
+</div>
       </div>
     </Link>
   );

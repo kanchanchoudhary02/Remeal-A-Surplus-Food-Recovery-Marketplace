@@ -22,6 +22,7 @@ const Navbar = () => {
 
         <div className="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600">
           <Link to="/" className="hover:text-remeal-green transition-colors">Home</Link>
+          <Link to="/food-requests" className="hover:text-remeal-green transition-colors">Food Requests</Link>
           <Link to="/explore" className="hover:text-remeal-green transition-colors">Explore Food</Link>
         </div>
 
