@@ -42,6 +42,11 @@ const orderSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
+    deliveryPartnerId: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: "User",
+  default: null,
+},
     status: {
       type: String,
       enum: ["PLACED", "CONFIRMED", "READY_FOR_PICKUP", "PICKED_UP", "ON_THE_WAY", "DELIVERED", "REJECTED"],

@@ -14,6 +14,8 @@ import { CartProvider } from "./context/CartContext";
 import FoodDetails from "./pages/FoodDetails";
 import Cart from "./pages/Cart";
 import MyOrders from "./pages/MyOrders";
+import MyDeliveries from "./pages/MyDeliveries";
+
 function App() {
   return (
     <AuthProvider>
@@ -27,7 +29,7 @@ function App() {
               <Route path="login" element={<Login />} />
               <Route path="register" element={<Register />} />
               <Route path="dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-
+              <Route path="my-deliveries" element={<ProtectedRoute><MyDeliveries /></ProtectedRoute>} />
               <Route path="add-food" element={<ProtectedRoute><AddFood /></ProtectedRoute>} />
               <Route path="my-orders" element={<ProtectedRoute><MyOrders /></ProtectedRoute>} />
          <Route path="my-orders" element={<ProtectedRoute><MyOrders /></ProtectedRoute>} />   {/* ✅ NAYA */}
