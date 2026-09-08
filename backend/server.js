@@ -6,7 +6,9 @@ import cors from "cors";
 import connectDB from "./config/db.js";
 import testRoutes from "./routes/testRoutes.js";                    // ✅ NAYA
 import { notFound, errorHandler } from "./middleware/errorMiddleware.js"; // ✅ NAYA
-
+import foodRoutes from "./routes/foodRoutes.js";
+import uploadRoutes from "./routes/uploadRoutes.js";
+import orderRoutes from "./routes/orderRoutes.js";
 dotenv.config();
 connectDB();
 
@@ -22,6 +24,9 @@ app.get("/", (req, res) => {
 // ✅ NAYA — test route ko app se jodo
 app.use("/api/test", testRoutes);
 app.use("/api/auth", authRoutes); 
+app.use("/api/foods", foodRoutes); 
+app.use("/api/upload", uploadRoutes); 
+app.use("/api/orders", orderRoutes); // ✅ NAYA — order routes ko app se jodo
 
 // ✅ NAYA — ye HAMESHA sabse last me aane chahiye (order important hai!)
 app.use(notFound);

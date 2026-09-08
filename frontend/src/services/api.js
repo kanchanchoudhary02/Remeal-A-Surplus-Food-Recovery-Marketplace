@@ -1,18 +1,23 @@
-// src/services/api.js
-// Ye ek "axios instance" hai — matlab axios ka ek pre-configured version.
-// Poore project me har jagah API call karne ke liye isi "api" ko import karenge,
-// baar baar poora URL (http://localhost:5000/api/...) likhne ki zaroorat nahi padegi.
+// services/api.js
 
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL, // .env file se aata hai
+  baseURL: import.meta.env.VITE_API_URL,
   headers: {
     "Content-Type": "application/json",
   },
 });
 
-// Day 7 me hum yaha ek "interceptor" add karenge jo
-// har request ke saath automatically JWT token bhej dega.
+// ✅ NAYA — "Interceptor": har request bhejne se PEHLE ye function chalta hai.
+// Isse hume har API call me manually token lagane ki zaroorat nahi —
+// ye automatically localStorage se token uthake header me daal dega.
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
 
 export default api;
