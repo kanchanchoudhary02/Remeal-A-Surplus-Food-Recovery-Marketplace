@@ -10,6 +10,8 @@ import foodRoutes from "./routes/foodRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import foodRequestRoutes from "./routes/foodRequestRoutes.js";
+import reviewRoutes from "./routes/reviewRoutes.js";
+import paymentRoutes from "./routes/paymentRoutes.js";
 dotenv.config();
 connectDB();
 
@@ -29,6 +31,8 @@ app.use("/api/foods", foodRoutes);
 app.use("/api/upload", uploadRoutes); 
 app.use("/api/orders", orderRoutes); // ✅ NAYA — order routes ko app se jodo
 app.use("/api/food-requests", foodRequestRoutes);   // ✅ NAYA
+app.use("/api/reviews", reviewRoutes);   // ✅ NAYA
+app.use("/api/payment", paymentRoutes);
 
 // ✅ NAYA — ye HAMESHA sabse last me aane chahiye (order important hai!)
 app.use(notFound);

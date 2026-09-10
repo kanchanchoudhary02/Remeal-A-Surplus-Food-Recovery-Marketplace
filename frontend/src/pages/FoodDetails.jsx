@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getFoodById } from "../services/foodService";
 import { useCart } from "../context/CartContext";
+const [reviews, setReviews] = useState([]);
+const [avgRating, setAvgRating] = useState(0);
 
 const FoodDetails = () => {
   const { id } = useParams(); // URL se :id nikalta hai (jaise /food/64fa2b... → id = "64fa2b...")
@@ -15,6 +17,8 @@ const FoodDetails = () => {
   const [error, setError] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
+  const [reviews, setReviews] = useState([]);
+const [avgRating, setAvgRating] = useState(0);
 
   useEffect(() => {
     const fetchFood = async () => {
@@ -26,6 +30,11 @@ const FoodDetails = () => {
       } finally {
         setLoading(false);
       }
+      if (data.foodListing.providerId?._id) {
+  const reviewData = await getProviderReviews(data.foodListing.providerId._id);
+  setReviews(reviewData.reviews);
+  setAvgRating(reviewData.averageRating);
+}
     };
     fetchFood();
   }, [id]); // agar id badle (naya food dekha), dobara fetch karo
@@ -69,6 +78,12 @@ const FoodDetails = () => {
           <p className="text-sm text-gray-500 mt-1">
             {food.providerId?.name} · {food.providerId?.providerType?.replace("_", " ")}
           </p>
+          {avgRating > 0 && (
+  <div className="flex items-center gap-1 mt-1">
+    <StarRating rating={Math.round(avgRating)} readOnly />
+    <span className="text-xs text-gray-500">({avgRating} · {reviews.length} reviews)</span>
+  </div>
+)}
 
           <div className="flex items-center gap-2 mt-4">
             <span className="text-2xl font-bold text-remeal-green">
