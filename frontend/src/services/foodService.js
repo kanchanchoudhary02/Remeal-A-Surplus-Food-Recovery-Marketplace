@@ -25,3 +25,7 @@ export const getFoodById = async (id) => {
   const response = await api.get(`/foods/${id}`);
   return response.data;
 };
+export const getProviderReviews = async (providerId) => {
+  const response = await api.get(`/foods/provider/${providerId}/reviews`);
+  return response.data;
+}

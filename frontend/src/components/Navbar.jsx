@@ -2,6 +2,7 @@
 
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import NotificationBell from "./NotificationBell";
 
 const Navbar = () => {
   const { user, logout } = useAuth();
@@ -26,8 +27,9 @@ const Navbar = () => {
           <Link to="/explore" className="hover:text-remeal-green transition-colors">Explore Food</Link>
         </div>
 
-        {/* ✅ NAYA — user login hai ya nahi, uske hisaab se alag content */}
         <div className="flex items-center gap-3">
+          <NotificationBell />
+
           {user ? (
             <>
               <Link

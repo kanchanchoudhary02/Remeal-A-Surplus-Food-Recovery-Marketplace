@@ -24,6 +24,14 @@ const protect = async (req, res, next) => {
         return res.status(401).json({ success: false, message: "User no longer exists" });
       }
 
+      // ✅ NAYA — agar user block ho gaya hai, use aage badhne hi na do
+      if (req.user.isBlocked) {
+        return res.status(403).json({
+          success: false,
+          message: "Your account has been blocked. Contact support.",
+        });
+      }
+
       next(); // sab sahi hai, agle middleware/controller ko jaane do
     } catch (error) {
       return res.status(401).json({ success: false, message: "Not authorized, token invalid" });

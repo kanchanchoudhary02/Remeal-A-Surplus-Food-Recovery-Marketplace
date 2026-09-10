@@ -3,15 +3,23 @@
 import { useState, useEffect } from "react";
 import { getMyOrders } from "../services/orderService";
 import { createReview } from "../services/reviewService";
+import { createComplaint } from "../services/complaintService";
 import StarRating from "../components/StarRating";
 
 const MyOrders = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [reviewingId, setReviewingId] = useState(null); // kaunsa order abhi review form dikha raha hai
+
+  const [reviewingId, setReviewingId] = useState(null);
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  // ✅ NAYA — complaint form state
+  const [complainingId, setComplainingId] = useState(null);
+  const [complaintReason, setComplaintReason] = useState("FOOD_QUALITY");
+  const [complaintDescription, setComplaintDescription] = useState("");
+  const [submittingComplaint, setSubmittingComplaint] = useState(false);
 
   const fetchOrders = async () => {
     try {
@@ -28,6 +36,7 @@ const MyOrders = () => {
 
   const openReviewForm = (orderId) => {
     setReviewingId(orderId);
+    setComplainingId(null); // dono forms ek saath na khule
     setRating(0);
     setComment("");
   };
@@ -41,12 +50,37 @@ const MyOrders = () => {
     try {
       await createReview(orderId, rating, comment);
       setReviewingId(null);
-      await fetchOrders(); // taaki "already reviewed" ka pata chal jaye
+      await fetchOrders();
       alert("Thanks for your review!");
     } catch (err) {
       alert(err.response?.data?.message || "Could not submit review.");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  // ✅ NAYA
+  const openComplaintForm = (orderId) => {
+    setComplainingId(orderId);
+    setReviewingId(null);
+    setComplaintReason("FOOD_QUALITY");
+    setComplaintDescription("");
+  };
+
+  const handleSubmitComplaint = async (orderId) => {
+    if (!complaintDescription.trim()) {
+      alert("Please describe the issue.");
+      return;
+    }
+    setSubmittingComplaint(true);
+    try {
+      await createComplaint(orderId, complaintReason, complaintDescription);
+      setComplainingId(null);
+      alert("Your complaint has been filed. Our team will look into it.");
+    } catch (err) {
+      alert(err.response?.data?.message || "Could not file complaint.");
+    } finally {
+      setSubmittingComplaint(false);
     }
   };
 
@@ -79,7 +113,7 @@ const MyOrders = () => {
                 {new Date(order.createdAt).toLocaleString()}
               </p>
 
-              {/* ✅ NAYA — sirf DELIVERED orders pe review option */}
+              {/* Review section — sirf DELIVERED orders pe */}
               {order.status === "DELIVERED" && (
                 <div className="mt-3">
                   {reviewingId === order._id ? (
@@ -118,6 +152,61 @@ const MyOrders = () => {
                   )}
                 </div>
               )}
+
+              {/* ✅ NAYA — Complaint section, kisi bhi order status pe available */}
+              <div className="mt-2">
+                {complainingId === order._id ? (
+                  <div className="bg-amber-50 rounded-lg p-4 mt-2 space-y-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">
+                        What went wrong?
+                      </label>
+                      <select
+                        value={complaintReason}
+                        onChange={(e) => setComplaintReason(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-remeal-green"
+                      >
+                        <option value="FOOD_QUALITY">Food Quality</option>
+                        <option value="LATE_DELIVERY">Late Delivery</option>
+                        <option value="WRONG_ITEM">Wrong Item</option>
+                        <option value="PROVIDER_BEHAVIOR">Provider Behavior</option>
+                        <option value="DELIVERY_BEHAVIOR">Delivery Partner Behavior</option>
+                        <option value="PAYMENT_ISSUE">Payment Issue</option>
+                        <option value="OTHER">Other</option>
+                      </select>
+                    </div>
+                    <textarea
+                      value={complaintDescription}
+                      onChange={(e) => setComplaintDescription(e.target.value)}
+                      placeholder="Describe the issue..."
+                      rows={2}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-remeal-green"
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleSubmitComplaint(order._id)}
+                        disabled={submittingComplaint}
+                        className="bg-remeal-orange text-white text-sm px-4 py-1.5 rounded-lg hover:bg-orange-600 disabled:opacity-60"
+                      >
+                        {submittingComplaint ? "Submitting..." : "Submit Complaint"}
+                      </button>
+                      <button
+                        onClick={() => setComplainingId(null)}
+                        className="text-sm text-gray-500 hover:underline"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => openComplaintForm(order._id)}
+                    className="text-sm text-gray-500 font-medium hover:underline"
+                  >
+                    Report an issue
+                  </button>
+                )}
+              </div>
             </div>
           ))}
         </div>

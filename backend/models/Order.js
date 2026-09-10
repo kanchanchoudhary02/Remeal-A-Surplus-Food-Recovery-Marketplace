@@ -47,6 +47,10 @@ const orderSchema = new mongoose.Schema(
   ref: "User",
   default: null,
 },
+isBlocked: {
+  type: Boolean,
+  default: false,
+},
     status: {
       type: String,
       enum: ["PLACED", "CONFIRMED", "READY_FOR_PICKUP", "PICKED_UP", "ON_THE_WAY", "DELIVERED", "REJECTED"],

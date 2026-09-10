@@ -2,13 +2,13 @@
 
 import Order from "../models/Order.js";
 import FoodListing from "../models/FoodListing.js";
+import createNotification from "../utils/createNotification.js";
 
 // @route   POST /api/orders
 // @access  Private (buyer)
 const createOrder = async (req, res) => {
   try {
     const { items } = req.body;
-    // items = [{ foodListingId, quantity }, ...]  — frontend se aayega
 
     if (!items || items.length === 0) {
       return res.status(400).json({ success: false, message: "Cart is empty" });
@@ -17,8 +17,6 @@ const createOrder = async (req, res) => {
     let subtotal = 0;
     const orderItems = [];
 
-    // Har item ke liye actual listing MongoDB se dobara verify karo
-    // (frontend ki price pe bharosa mat karo — koi tamper kar sakta hai)
     for (const item of items) {
       const listing = await FoodListing.findById(item.foodListingId);
 
@@ -41,7 +39,7 @@ const createOrder = async (req, res) => {
       });
     }
 
-    const deliveryFee = 30; // abhi ke liye fixed — Day 19 ke baad distance-based bana sakte hain
+    const deliveryFee = 30;
     const platformFee = 10;
     const totalAmount = subtotal + deliveryFee + platformFee;
 
@@ -54,6 +52,14 @@ const createOrder = async (req, res) => {
       totalAmount,
       paymentStatus: subtotal === 0 ? "FREE" : "PENDING",
     });
+
+    // ✅ Provider ko notify karo naye order ka
+    await createNotification(
+      orderItems[0].providerId,
+      `New order received for ${orderItems[0].title}`,
+      "NEW_ORDER",
+      order._id
+    );
 
     res.status(201).json({ success: true, message: "Order placed successfully", order });
   } catch (error) {
@@ -71,11 +77,11 @@ const getMyOrders = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
 // @route   GET /api/orders/provider-orders
 // @access  Private (provider)
 const getProviderOrders = async (req, res) => {
   try {
-    // Sirf wo orders lao jinke items me is provider ka providerId ho
     const orders = await Order.find({ "items.providerId": req.user._id })
       .populate("buyerId", "name phone")
       .sort({ createdAt: -1 });
@@ -92,7 +98,6 @@ const updateOrderStatus = async (req, res) => {
   try {
     const { status } = req.body;
 
-    // Provider sirf ye 3 transitions kar sakta hai — koi bhi random status set nahi kar sakta
     const allowedStatuses = ["CONFIRMED", "READY_FOR_PICKUP", "REJECTED"];
     if (!allowedStatuses.includes(status)) {
       return res.status(400).json({
@@ -107,7 +112,6 @@ const updateOrderStatus = async (req, res) => {
       return res.status(404).json({ success: false, message: "Order not found" });
     }
 
-    // Security check — ye order isi provider ka hai ya nahi
     const isProvidersOrder = order.items.some(
       (item) => item.providerId.toString() === req.user._id.toString()
     );
@@ -115,7 +119,6 @@ const updateOrderStatus = async (req, res) => {
       return res.status(403).json({ success: false, message: "This is not your order" });
     }
 
-    // Simple state-machine check — status sirf logical order me hi badal sakta hai
     const validTransitions = {
       PLACED: ["CONFIRMED", "REJECTED"],
       CONFIRMED: ["READY_FOR_PICKUP"],
@@ -131,22 +134,47 @@ const updateOrderStatus = async (req, res) => {
     order.status = status;
     await order.save();
 
+    // ✅ Buyer ko notify karo
+    if (status === "CONFIRMED") {
+      await createNotification(
+        order.buyerId,
+        `Your order has been confirmed by the provider`,
+        "ORDER_CONFIRMED",
+        order._id
+      );
+    } else if (status === "REJECTED") {
+      await createNotification(
+        order.buyerId,
+        `Your order was rejected by the provider`,
+        "ORDER_REJECTED",
+        order._id
+      );
+    } else if (status === "READY_FOR_PICKUP") {
+      await createNotification(
+        order.buyerId,
+        `Your food is ready for pickup`,
+        "FOOD_READY",
+        order._id
+      );
+    }
+
     res.status(200).json({ success: true, message: "Order status updated", order });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
 // @route   GET /api/orders/available-deliveries
 // @access  Private (delivery)
 const getAvailableDeliveries = async (req, res) => {
   try {
     const orders = await Order.find({
       status: "READY_FOR_PICKUP",
-      deliveryPartnerId: null, // jo abhi tak kisi ne accept nahi ki
+      deliveryPartnerId: null,
     })
       .populate("buyerId", "name phone address")
       .populate("items.providerId", "name address")
-      .sort({ createdAt: 1 }); // sabse purana pehle — jo zyada der se wait kar raha hai
+      .sort({ createdAt: 1 });
 
     res.status(200).json({ success: true, count: orders.length, orders });
   } catch (error) {
@@ -181,6 +209,14 @@ const acceptDelivery = async (req, res) => {
     order.deliveryPartnerId = req.user._id;
     await order.save();
 
+    // ✅ Buyer ko notify karo
+    await createNotification(
+      order.buyerId,
+      `A delivery partner has been assigned to your order`,
+      "DELIVERY_ACCEPTED",
+      order._id
+    );
+
     res.status(200).json({ success: true, message: "Delivery accepted", order });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -201,6 +237,7 @@ const getMyDeliveries = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
 // @route   PUT /api/orders/:id/delivery-status
 // @access  Private (delivery)
 const updateDeliveryStatus = async (req, res) => {
@@ -221,7 +258,6 @@ const updateDeliveryStatus = async (req, res) => {
       return res.status(404).json({ success: false, message: "Order not found" });
     }
 
-    // Security check — sirf assigned delivery partner hi status badal sakta hai
     if (!order.deliveryPartnerId || order.deliveryPartnerId.toString() !== req.user._id.toString()) {
       return res.status(403).json({
         success: false,
@@ -229,7 +265,6 @@ const updateDeliveryStatus = async (req, res) => {
       });
     }
 
-    // State machine — sirf logical order me hi aage badh sakta hai
     const validTransitions = {
       READY_FOR_PICKUP: ["PICKED_UP"],
       PICKED_UP: ["ON_THE_WAY"],
@@ -245,12 +280,22 @@ const updateDeliveryStatus = async (req, res) => {
 
     order.status = status;
 
-    // Agar delivered ho gaya, payment bhi settle maano (free food ke alawa)
     if (status === "DELIVERED" && order.paymentStatus === "PENDING") {
       order.paymentStatus = "PAID";
     }
 
     await order.save();
+
+    // ✅ Buyer ko notify karo
+    const statusMessages = {
+      PICKED_UP: "Your order has been picked up by the delivery partner",
+      ON_THE_WAY: "Your order is on the way",
+      DELIVERED: "Your order has been delivered. Enjoy your meal!",
+    };
+
+    if (statusMessages[status]) {
+      await createNotification(order.buyerId, statusMessages[status], status, order._id);
+    }
 
     res.status(200).json({ success: true, message: "Delivery status updated", order });
   } catch (error) {

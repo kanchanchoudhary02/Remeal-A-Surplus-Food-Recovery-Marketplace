@@ -33,6 +33,9 @@ const createCashfreeOrder = async (req, res) => {
       },
     };
 
+    // ✅ DEBUG — temporary, dekhenge fir hata denge
+ console.log("App ID (raw):", JSON.stringify(process.env.CASHFREE_APP_ID));
+console.log("Secret Key (raw):", JSON.stringify(process.env.CASHFREE_SECRET_KEY));
     const response = await axios.post(
       `${process.env.CASHFREE_API_URL}/orders`,
       payload,

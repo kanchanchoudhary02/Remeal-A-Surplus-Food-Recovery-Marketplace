@@ -27,3 +27,8 @@ export const getMyDeliveries = async () => {
   const response = await api.get("/orders/my-deliveries");
   return response.data;
 };
+
+export const updateDeliveryStatus = async (orderId, status) => {
+  const response = await api.put(`/orders/${orderId}/update-delivery-status`, { status });
+  return response.data;
+}
