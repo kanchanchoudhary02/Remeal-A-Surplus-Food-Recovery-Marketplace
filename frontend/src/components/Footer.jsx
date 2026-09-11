@@ -7,6 +7,7 @@ const Footer = () => {
         <p>Where Surplus Food Finds Its Next Meal.</p>
         <p className="mt-4 text-xs">© 2026 ReMeal. Built while learning MERN.</p>
       </div>
+      <h2>hyyyyyyyyyy</h2>
     </footer>
   );
 };
