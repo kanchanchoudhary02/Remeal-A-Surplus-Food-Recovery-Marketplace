@@ -110,7 +110,7 @@ const fulfillFoodRequest = async (req, res) => {
         message: "You cannot fulfill your own food request",
       });
     }
-
+<
     if (foodRequest.status !== "OPEN") {
       return res.status(400).json({
         success: false,

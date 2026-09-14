@@ -87,7 +87,9 @@ const FoodCard = ({ food }) => {
     <>
       <span className="text-gray-300">·</span>
       <p className="text-xs text-gray-500">{food.distance} km away</p>
+      <h1>kanchan</h1>
     </>
+  
   )}
 </div>
       </div>
